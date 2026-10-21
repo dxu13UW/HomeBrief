@@ -116,7 +116,7 @@ Record dead ends too (for example, why voice input through the speaker was dropp
 ## Build order
 
 - [x] 1. Cast a test "hello" to the speaker from a plain Python script (riskiest step).
-- [ ] 2. Wrap casting in the speaker MCP server; register it with Claude Code; test.
+- [x] 2. Wrap casting in the speaker MCP server; register it with Claude Code; test.
 - [ ] 3. Calendar access for Claude Code (read events, write tagged events).
 - [ ] 4. `morning_briefing.py` with validation; schedule it.
 - [ ] 5. Stop hook with loop guard.

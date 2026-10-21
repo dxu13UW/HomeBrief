@@ -63,3 +63,19 @@ through the browser's zeroconf instance, so stopping it early broke that lookup.
 Problems: Code, not model. Three test runs after the fix all played (IDLE/FINISHED) with
 no traceback; it was intermittent before, so this lowers the risk but doesn't prove it's gone.
 Next: Step 2, speaker MCP server built on the same casting code.
+
+## 2026-10-20 — Step 2: speaker MCP server
+Plan: Wrap casting in an MCP server so Claude Code can call announce(text). Added the `mcp`
+package (official MCP Python SDK; no API key, no billing) after asking. It installed as 2.3.0,
+where FastMCP is renamed MCPServer.
+Changed: speaker_mcp/speaker.py (plain code: clean() strips markdown/URLs/emoji and cuts to
+150 words at a sentence end; Speaker keeps one HTTP server up, makes a unique mp3 per call,
+casts with one retry, deletes the file; every call logged to logs/announce.log as raw text,
+spoken text and result). speaker_mcp/server.py (MCP tool announce, stdio). .mcp.json registers
+it at project scope. requirements.txt gains mcp.
+Problems: None so far. Tested three ways: clean() on markdown/emoji/long input; a plain MCP
+client calling announce (played, FINISHED); headless `claude -p` choosing what to say and
+calling announce itself (played). Lists lose their punctuation when bullets are stripped
+("Standup at ten thirty Lunch at noon"), so the model must write sentences, as the tool
+description says.
+Next: Both announcements confirmed audible. Step 3 (calendar access).
