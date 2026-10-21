@@ -28,6 +28,7 @@ TAG = "[claude]"
 EARLIEST = time(8, 0)
 LATEST = time(22, 0)
 MAX_TITLE = 100
+MAX_CLAUDE_PER_DAY = 3  # cap on [claude] events per day, so repeated runs can't pile up
 
 load_dotenv(ROOT / ".env")
 TZ = ZoneInfo(os.getenv("TIME_ZONE", "America/Los_Angeles"))
@@ -102,6 +103,8 @@ def check_new_event(start: datetime, end: datetime, existing: list[dict]) -> lis
         errors.append("event must start and end on the same day")
     if start.time() < EARLIEST or end.time() > LATEST:
         errors.append("event must fall between 8:00 AM and 10:00 PM")
+    if sum(e["claude"] for e in existing) >= MAX_CLAUDE_PER_DAY:
+        errors.append(f"already {MAX_CLAUDE_PER_DAY} Claude events that day")
     for e in existing:
         if e["all_day"]:
             continue

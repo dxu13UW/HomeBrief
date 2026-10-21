@@ -117,3 +117,51 @@ both events correctly in plain speech style); a 7:00 AM event was rejected; an o
 10:15-10:45 event was rejected with the reason "overlaps 'HomeBrief test focus block'
 (10:00-10:30)"; all-day events don't block focus blocks, by design.
 Next: Commit, then step 4 (morning_briefing.py with validation; schedule it).
+
+## 2026-10-20 — Step 4: morning_briefing.py (dry runs)
+Plan: Plain code fetches events, `claude -p` plans the day and writes the briefing, code
+validates and speaks it. Design change from the architecture sketch: Claude returns the text
+instead of calling announce() itself, because CLAUDE.md requires validation before speaking.
+The headless run gets no built-in tools (--tools "") and only the calendar MCP tools.
+Changed: morning_briefing.py (spoken_time(), coverage check that tolerates "my"/"your",
+validate() strips markdown/URLs/emoji, cuts to 150 words, appends missing events; plain
+fallback when claude fails; logs every run to logs/briefings.jsonl; --dry-run, --date;
+sets HOMEBRIEF_HOOK=1 for step 5). prompts/morning_briefing.md holds the model's whole job.
+gcal.py: at most 3 [claude] events per day, so repeated runs can't pile up.
+Problems: Model, minor: the first dry run said "water my cactus" because the prompt said to use
+titles; the prompt now says to switch "my" to "your". Otherwise the dry run for 10/21 passed
+validation with no warnings (Claude Code reported $0.05 for the run). The simulated claude
+failure produced the fallback list.
+Next: First real run (speaker, focus blocks allowed), then scheduling.
+
+## 2026-10-20 — Step 4: first real briefing
+Plan: Full run for 10/21 with the speaker and focus blocks allowed (user approved).
+Changed: Nothing in code.
+Problems: None. Briefing played (passed validation, no warnings; "your cactus" now). Claude
+added no focus blocks: the prompt says to skip them when the day already has a [claude]
+event, and the 10:00 test block counts. That is the prompt working as written, not a failure;
+to see a focus block get created, delete the test block and rerun.
+Next: Schedule the daily run.
+
+## 2026-10-20 — Step 4: scheduled
+Plan: Run the briefing daily at 7:30 AM. Chose Windows Task Scheduler over cron in WSL: cron
+only runs while WSL is already up, while Task Scheduler starts WSL and can wake the PC.
+Changed: Windows task "HomeBrief Morning Briefing" (outside the repo): daily 7:30 AM, wake to
+run, start when available if missed, 15-minute limit, runs as the user when logged on:
+`wsl.exe -d Debian --cd <repo> -- .venv/bin/python morning_briefing.py`. The time lives in
+the task, not .env; changing BRIEFING_TIME means updating the task.
+Problems: None. Tested the exact launch path from Windows with --dry-run (exit 0; Claude
+said "Good evening" and that the day was empty). Did not start the real task by hand, since
+it would brief today and likely add focus blocks to tonight's empty calendar.
+Next: First scheduled run tomorrow 7:30; check logs/briefings.jsonl. Then step 5 (Stop hook).
+
+## 2026-10-20 — Discord status for focus blocks (planned, deferred)
+Plan: User asked for Discord to show Do Not Disturb and a "focus block (start to end)" status
+during focus blocks. Setting a user's own status or custom status from code needs the account
+token (a "self-bot"), which Discord's Terms of Service ban, so that part was dropped. Agreed
+alternative: Discord Rich Presence (the activity line, e.g. "Focus block 2:00 to 3:30 PM")
+through the desktop client's local RPC, via pypresence and a free application ID, no token.
+It must run on Windows Python because the Discord client is on Windows. Switching presence at
+block start/end is deterministic, so it belongs to plain code, not the model.
+Changed: Nothing yet.
+Next: Optional extra after steps 5 and 6.
