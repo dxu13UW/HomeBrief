@@ -1,0 +1,16 @@
+# secrets and config
+.env
+credentials*.json
+token*.json
+*.ics
+
+# runtime
+logs/
+audio/
+.venv/
+__pycache__/
+
+# Windows download tags and course material
+*:Zone.Identifier
+Artifact_3.docx
+Artifact_3.pdf
