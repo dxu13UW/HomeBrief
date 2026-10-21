@@ -53,3 +53,13 @@ Problems: None. Confirmed audible on the speaker. It (192.168.0.127) fetched /he
 IDLE/FINISHED. The zeroconf traceback did not appear this run, so it is intermittent, but
 the early stop_discovery() call is still there.
 Next: Fix the early stop_discovery(), then step 2 (speaker MCP server).
+
+## 2026-10-20 — Fix early stop of Cast discovery
+Plan: Remove the intermittent "Zeroconf instance loop must be running" traceback before
+reusing the casting code in the MCP server.
+Changed: test_cast.py: find_speaker() now returns (cast, browser) and main() stops the
+browser only after cast.disconnect(). The cast's connection thread resolves the speaker
+through the browser's zeroconf instance, so stopping it early broke that lookup.
+Problems: Code, not model. Three test runs after the fix all played (IDLE/FINISHED) with
+no traceback; it was intermittent before, so this lowers the risk but doesn't prove it's gone.
+Next: Step 2, speaker MCP server built on the same casting code.

@@ -37,15 +37,19 @@ def discover(timeout: float = 10):
 
 
 def find_speaker(name: str, ip: str | None):
+    """Return (cast, browser). The cast resolves its host through the browser's
+    zeroconf instance, so the caller must stop the browser only after disconnecting."""
     if ip:
         casts, browser = pychromecast.get_chromecasts(known_hosts=[ip], timeout=10)
-        browser.stop_discovery()
         if casts:
-            return casts[0]
+            return casts[0], browser
+        browser.stop_discovery()
         sys.exit(f"No Cast device answered at {ip}")
-    for cast in discover():
+    casts, browser = pychromecast.get_chromecasts(timeout=10)
+    for cast in casts:
         if cast.cast_info.friendly_name == name:
-            return cast
+            return cast, browser
+    browser.stop_discovery()
     sys.exit(f"Speaker {name!r} not found. Run with --discover to list devices.")
 
 
@@ -78,7 +82,7 @@ def main():
     AUDIO_DIR.mkdir(exist_ok=True)
     gTTS(args.text).save(AUDIO_DIR / "hello.mp3")
 
-    cast = find_speaker(name, ip)
+    cast, browser = find_speaker(name, ip)
     cast.wait()
     url = f"http://{local_ip_toward(cast.cast_info.host)}:{port}/hello.mp3"
     print(f"Casting {url} to {cast.cast_info.friendly_name}")
@@ -100,6 +104,7 @@ def main():
     print("Final player state:", mc.status.player_state, mc.status.idle_reason)
     server.shutdown()
     cast.disconnect()
+    browser.stop_discovery()
 
 
 if __name__ == "__main__":
