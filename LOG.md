@@ -79,3 +79,41 @@ calling announce itself (played). Lists lose their punctuation when bullets are 
 ("Standup at ten thirty Lunch at noon"), so the model must write sentences, as the tool
 description says.
 Next: Both announcements confirmed audible. Step 3 (calendar access).
+
+## 2026-10-20 — Step 3: calendar access (code written, awaiting OAuth setup)
+Plan: Considered the claude.ai Google Calendar connector (works in claude -p, no setup) but
+chose our own Google Calendar API access: with the connector, plain code couldn't fetch events
+itself and Claude would hold edit/delete on every event, with overlap checks impossible to
+enforce in code. Added google-api-python-client and google-auth-oauthlib (asked first).
+Changed: calendar_mcp/gcal.py (plain code: OAuth, day_events(), check_new_event() enforcing
+8 AM-10 PM, same day, no overlap; create_tagged_event() always appends [claude]; no update
+or delete function exists). calendar_mcp/server.py exposes list_events and
+create_tagged_event; registered in .mcp.json. .env.example gains CALENDAR_ID.
+Problems: Code, found in testing: mcp 2.x hides any exception other than ToolError from the
+model ("Error executing tool"), so Claude would never see why an event was rejected. Both
+servers now raise ToolError with the reason. Rule checks pass offline tests (overlap,
+back-to-back allowed, before 8, after 10, reversed times, UTC input).
+Next: Create a Google Cloud OAuth client, run gcal.py --auth, test against the real calendar.
+
+## 2026-10-20 — Step 3: Google login
+Plan: Authorize calendar access with the OAuth client the user created.
+Changed: credentials.json (renamed from the downloaded client_secret_*.json) and token.json,
+both gitignored; .gitignore also covers client_secret*.json. gcal.py --auth now line-buffers
+stdout so the login URL shows even when output goes to a file.
+Problems: Code: the first --auth run never showed its URL (Python buffered stdout, not a
+terminal) and then hit the 2-minute limit on `!` commands; running it in the background fixed
+that. A second run failed with MismatchingStateError (the approval came from a different
+login's link); a fresh run worked. The localhost redirect into WSL works under mirrored mode.
+Reading works, but the primary calendar returned no events from 7 days back to 30 days ahead.
+Next: Confirm the right Google account was used, add test events, then test focus-block creation.
+
+## 2026-10-20 — Step 3: calendar access works
+Plan: Test reads and guarded writes against the real calendar (the user's account was empty;
+they added an all-day "water my cactus" on 10/21).
+Changed: No code changes. With the user's approval, created "HomeBrief test focus block"
+10/21 10:00-10:30 through the MCP server (tagged [claude]); the user will delete it by hand.
+Problems: None. Results: list_events works through MCP and headless claude -p (it described
+both events correctly in plain speech style); a 7:00 AM event was rejected; an overlapping
+10:15-10:45 event was rejected with the reason "overlaps 'HomeBrief test focus block'
+(10:00-10:30)"; all-day events don't block focus blocks, by design.
+Next: Commit, then step 4 (morning_briefing.py with validation; schedule it).

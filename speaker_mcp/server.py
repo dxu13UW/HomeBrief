@@ -8,6 +8,7 @@ import os
 
 from dotenv import load_dotenv
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
 from speaker import MAX_WORDS, ROOT, Speaker, clean, log
 
@@ -31,12 +32,12 @@ def announce(text: str) -> str:
     spoken = clean(text, MAX_WORDS)
     if not spoken:
         log(text, spoken, "rejected: empty after cleaning")
-        raise ValueError("Nothing left to say after removing markdown, URLs and emoji.")
+        raise ToolError("Nothing left to say after removing markdown, URLs and emoji.")
     try:
         speaker.say(spoken)
     except Exception as e:
         log(text, spoken, f"error: {e}")
-        raise RuntimeError(f"Could not play on the speaker: {e}") from e
+        raise ToolError(f"Could not play on the speaker: {e}") from e
     log(text, spoken, "played")
     return f"Played on {speaker.name}: {spoken}"
 

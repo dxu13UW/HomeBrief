@@ -2,3 +2,5 @@ pychromecast
 gTTS
 python-dotenv
 mcp
+google-api-python-client
+google-auth-oauthlib

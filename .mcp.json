@@ -7,6 +7,14 @@
         "/home/KO300/ELIXIR/CS490/homebrief/speaker_mcp/server.py"
       ],
       "env": {}
+    },
+    "calendar": {
+      "type": "stdio",
+      "command": "/home/KO300/ELIXIR/CS490/homebrief/.venv/bin/python",
+      "args": [
+        "/home/KO300/ELIXIR/CS490/homebrief/calendar_mcp/server.py"
+      ],
+      "env": {}
     }
   }
 }

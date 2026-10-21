@@ -1,6 +1,7 @@
 # secrets and config
 .env
 credentials*.json
+client_secret*.json
 token*.json
 *.ics
 
