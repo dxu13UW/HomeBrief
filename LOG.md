@@ -165,3 +165,54 @@ It must run on Windows Python because the Discord client is on Windows. Switchin
 block start/end is deterministic, so it belongs to plain code, not the model.
 Changed: Nothing yet.
 Next: Optional extra after steps 5 and 6.
+
+## 2026-10-20 — Step 5: Stop hook
+Plan: Speak a one-sentence summary when a Claude Code turn finishes, without looping.
+Changed: hooks/announce_done.sh (loop guard: exits if HOMEBRIEF_HOOK is set, otherwise sets
+it; starts the worker in the background so the session isn't held up). hooks/announce_done.py
+(plain code reads the last request and final reply from the transcript; skips turns shorter
+than HOOK_MIN_SECONDS, default 60, so quick answers stay silent; asks `claude -p --model
+haiku` with no tools for one sentence; validates: drops paths and file names, keeps the
+first sentence of 4+ words, max 25 words; falls back to "Claude finished a task."; logs to
+logs/hook.jsonl). Registered in .claude/settings.json. speaker.py now holds port 8765 only
+while playing and waits if another HomeBrief process has it: the MCP server used to keep the
+port open after its first announce, which would have blocked the hook and the briefing.
+Problems: Model: tested mid-turn, the summary talked about the request instead of summarizing
+("I'll report what the request actually asks for"); the prompt now asks for a first-person
+summary and forbids commenting on instructions. Haiku also tends to write two sentences; the
+code keeps the first. Code: the first validator kept only "Done!" from "Done! Committed...";
+it now skips openers shorter than 4 words. Guard, short-turn skip and a finished-turn summary
+all tested; the summary played on the speaker.
+Next: Confirm the hook fires at the end of a real interactive turn; commit; step 6.
+
+## 2026-10-20 — Step 5: first real hook firing, two fixes
+Plan: Check the hook at the end of a real interactive turn.
+Changed: announce_done.py uses the hook input's last_assistant_message (Claude Code provides
+it for Stop hooks) and only falls back to the transcript. The validator now drops whole words
+containing backticks, underscores, slashes or file extensions instead of squashing them.
+Problems: The hook fired on time, but it said "Stopped mid-task: the reply ends before the
+hook is registered or HOOKMINSECONDS is added to ." Code: when the hook ran, the transcript
+didn't yet contain the final reply, so the model summarized an earlier progress note (the
+model did what it was asked with the wrong input). Model, then code: the model wrote code
+words despite the prompt, and the validator turned them into "HOOKMINSECONDS" and a bare
+"to ." Both fixed and tested offline.
+Next: Confirm a correct summary at the end of the next long turn, tick step 5, commit.
+
+## 2026-10-20 — Step 5: clean cut for long summaries
+Plan: Retest the fixed hook.
+Changed: announce_done.py: a sentence over 25 words is now cut at the last comma, colon or
+semicolon within the limit (plus a period) instead of mid-phrase.
+Problems: The user heard the old broken sentence again, but that was a manual replay; the real
+hook for that turn logged "skipped: short turn" (59 s, just under the 60 s minimum). Rerunning
+the worker with the previous final reply in last_assistant_message summarized the right reply,
+but the model wrote 36 words and the 25-word cut stopped mid-phrase ("...the next run has to").
+Model ignored the length limit; code now handles it. Tested offline.
+Next: Confirm a clean summary from a real long turn, tick step 5, commit.
+
+## 2026-10-20 — Step 5 done
+Plan: Confirm the hook on a real long turn.
+Changed: Nothing in code.
+Problems: None. The hook fired at the end of a real interactive turn and spoke one clean
+sentence about the comma cut; the user confirmed it was what they heard.
+Next: Step 6 (README with the model/code split, portfolio card with reflection). Then optional
+Discord Rich Presence.

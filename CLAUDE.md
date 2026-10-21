@@ -119,7 +119,7 @@ Record dead ends too (for example, why voice input through the speaker was dropp
 - [x] 2. Wrap casting in the speaker MCP server; register it with Claude Code; test.
 - [x] 3. Calendar access for Claude Code (read events, write tagged events).
 - [x] 4. `morning_briefing.py` with validation; schedule it.
-- [ ] 5. Stop hook with loop guard.
+- [x] 5. Stop hook with loop guard.
 - [ ] 6. README describing the model/code split; portfolio card with reflection.
 
 Update these checkboxes as steps are finished.
