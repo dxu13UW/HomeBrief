@@ -216,3 +216,45 @@ Problems: None. The hook fired at the end of a real interactive turn and spoke o
 sentence about the comma cut; the user confirmed it was what they heard.
 Next: Step 6 (README with the model/code split, portfolio card with reflection). Then optional
 Discord Rich Presence.
+
+## 2026-10-20 — Step 6: README and Obsidian note
+Plan: Document the model/code split, as the assignment asks ("write down exactly what the
+model is responsible for and what the surrounding code checks").
+Changed: README.md: what each part does, a table of every check the code performs on the
+model's output (with the function that does it), architecture, which log to read when
+something goes wrong, setup (WSL networking and firewall, Google OAuth, scheduling), cost.
+Also wrote the Obsidian note "Artifact 3.md" (outside the repo) in the same style as Artifact 2,
+with a draft reflection for the user to rewrite.
+Problems: None.
+Next: Push the repo to GitHub, fill in the portfolio card, submit. Optional Discord Rich Presence.
+
+## 2026-10-20 — Record the planning phase (Oct 18-19)
+Plan: The log starts on 10/20, but the project was planned on 10/18-10/19 in Claude Desktop:
+the user asked it many questions and chose from the options it offered. Those decisions became
+CLAUDE.md (constraints, model/code split, spoken-text and calendar rules, loop guard, build
+order) before any code was written.
+Changed: README.md "Project history" and the Obsidian note now describe the planning phase.
+Problems: None. The Desktop chat itself isn't on this machine; details stay general until it's
+exported.
+Next: Export the Claude Desktop planning chat and add it to the repo.
+
+## 2026-10-20 — Add the planning conversation
+Plan: Keep the Claude Desktop planning chat in the repo as the record of how CLAUDE.md was made.
+Changed: docs/planning-conversation.md (the user's exported text, converted to Markdown with
+the wording unchanged; checked by diff). README "Project history" now lists the planning
+decisions: no voice input, Calendar as the bridge instead of Claude prompting Gemini, options
+1+3+4 chosen out of 7, claude -p instead of the API, the name. Same added to the Obsidian note,
+plus a separate vault note "Artifact 3 Planning Conversation".
+Problems: The export's header says October 20, but the user remembers planning on Oct 18-19;
+kept Oct 18-19 and asked the user to confirm.
+Next: Commit, push to GitHub, portfolio card.
+
+## 2026-10-20 — Focus block for Discord Rich Presence
+Plan: User asked to move tomorrow's focus block to 7:00-8:30 for working on Discord Rich
+Presence. 7:00 AM would break the 8 AM rule, so asked; user chose 7:00-8:30 PM, moving the
+10:00 test block.
+Changed: Created "Focus: Discord Rich Presence" 10/21 19:00-20:30 (tagged [claude]) through
+gcal.create_tagged_event. The code has no edit or delete, so the user deletes the 10:00 test
+block by hand.
+Problems: None.
+Next: Rich Presence work during that block; it needs pypresence (ask first) and Windows Python.
