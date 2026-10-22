@@ -16,6 +16,7 @@ there is no Claude API key and no per-call billing.
 | Speaker MCP server (`speaker_mcp/`) | Whenever Claude Code calls `announce(text)` | Code cleans the text, makes speech with gTTS, casts it to the speaker |
 | Calendar MCP server (`calendar_mcp/`) | Whenever Claude Code calls `list_events` / `create_tagged_event` | Code reads events, or checks the write rules and creates a `[claude]` event |
 | Stop hook (`hooks/announce_done.sh`) | End of every Claude Code turn in this project that takes 60 s or more | `claude -p` writes one sentence about what was done → code validates it → speaker |
+| Discord presence (`presence/`) | Always, while I'm logged in to Windows | During a `[claude]` focus block, Discord shows "Playing HomeBrief", the block's title, its time span and a countdown; cleared when it ends. No model: Claude already chose the blocks |
 
 ## Who is responsible for what
 
@@ -74,6 +75,7 @@ Check the raw model output first, then decide which side failed:
 | `logs/hook.jsonl` | Each hook run: turn length, Claude's raw sentence, what was spoken, or why it was skipped |
 | `logs/announce.log` | Each `announce()` call: raw text, spoken text, result |
 | `logs/hook.err` | Errors from the background hook worker |
+| `logs/presence.log` | Each Discord presence change, and errors (logged once until they change) |
 
 If the raw text is fine but the speech is wrong, it's the code. If the raw text breaks the
 rules, it's the model, and the validator should have caught it.
@@ -109,8 +111,19 @@ registers the Stop hook. Claude Code asks to approve them the first time. The pa
 `.mcp.json` are absolute, so edit them on another machine.
 
 **Schedule (Windows):** a Task Scheduler task runs daily at 7:30 AM with "wake the computer"
-on:
+on and "Run whether user is logged on or not" (it stores the Windows password; a PIN won't
+work, and if the password was changed online, sign in once with it so Windows updates its
+local copy):
 `wsl.exe -d Debian --cd <repo> -- .venv/bin/python morning_briefing.py`
+"Wake the computer" only works from sleep. To also cover a full shutdown, my BIOS powers the
+PC on at 7:15 AM (Advanced → APM → Power On By RTC).
+
+**Discord presence (optional):** create an application at discord.com/developers, put its
+Application ID in `.env` as `DISCORD_CLIENT_ID` (it isn't a secret), and add a logon task:
+`conhost.exe --headless wsl.exe -d Debian --cd <repo> -- .venv/bin/python presence/focus_presence.py`.
+WSL can't open the Discord client's named pipe, so `presence/discord_relay.ps1` relays the
+messages through PowerShell. No extra Python packages. Others only see the status if
+Discord's "Share your detected activities" is on.
 
 ## Running by hand
 
@@ -149,5 +162,6 @@ calendar writes, the validation code must do, the hook loop guard, and a build o
 riskiest step (casting to the speaker) first.
 
 **Building (October 20 onward).** `LOG.md` records every plan, change and problem from then
-on, including dead ends (voice input through the speaker, and changing Discord status, which
-would need a banned self-bot).
+on, including dead ends (voice input through the speaker, and changing my Discord online
+status or custom status, which would need a banned self-bot; Rich Presence is the allowed
+alternative).

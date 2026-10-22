@@ -301,3 +301,44 @@ through since the 18th and 19th; the Claude Desktop chat itself may have been on
 (as the export header says), still before any code.
 Problems: None.
 Next: Discord Rich Presence.
+
+## 2026-10-21 — Discord Rich Presence (in progress)
+Plan: Show the current focus block in Discord. Windows has no regular Python (only Cygwin's,
+which can't open Windows named pipes), so instead of installing Windows Python + pypresence:
+the logic stays in WSL Python, and a small PowerShell script relays messages to Discord's
+local pipe. No new dependency. No model: switching presence at block start/end is mechanical.
+Changed: presence/focus_presence.py (reads today's [claude] events every 5 min, checks every
+30 s, sets or clears the activity: title, "7:00 to 8:30 PM", countdown; logs to
+logs/presence.log; --once for testing). presence/discord_relay.ps1 (frames JSON for Discord's
+IPC pipe, prints replies). .env.example gains DISCORD_CLIENT_ID.
+Problems: None so far. Relay reached Discord; a fake client ID got "Invalid Client ID" back as
+expected. Block detection correct at 7:37 PM (in the Discord block), 10:15 AM (test block)
+and noon (none).
+Next: User creates a Discord application for its ID; test --once; start it at logon.
+
+## 2026-10-21 — Discord Rich Presence works
+Plan: Turn on presence with the user's Discord application ID and start it at logon.
+Changed: DISCORD_CLIENT_ID in .env. focus_presence.py now logs a repeated error only once
+(Discord closed at logon would otherwise log every 30 s). Windows task "HomeBrief Discord
+Presence" (outside the repo): at logon, runs focus_presence.py through `conhost --headless`
+so no window shows; no time limit; restarts up to 3 times; Interactive, since Discord runs
+in the user's session.
+Problems: None. The user saw "Playing HomeBrief / Focus: Discord Rich Presence / 7:00 to 8:30
+PM" on their profile. Others only see it with Discord's "share detected activities" on;
+Discord has no per-app allow list, only a block list for detected games.
+Next: Confirm it clears at 8:30 PM; add it to the README and the Obsidian note; commit.
+
+## 2026-10-21 — Presence wording
+Plan: User wants the first line to read "Focus Block: <topic>" and the second the time span.
+Changed: focus_presence.py activity(): details = "Focus Block: " + the title with any leading
+"Focus:" / "Focus block -" removed; state stays "7:00 to 8:30 PM". Restarted the logon task.
+Problems: Code (mine, in the session): `pkill -f` matched its own shell and killed the command
+before the restart; restarted the task separately.
+Next: Confirm the new wording on the profile and that it clears at 8:30 PM; commit.
+
+## 2026-10-21 — Presence clears on time
+Plan: Confirm the presence clears when the block ends.
+Changed: Nothing.
+Problems: None. presence.log: "20:30:18 presence: cleared"; the process keeps running for the
+next block. The user saw the new "Focus Block: <topic>" wording on their profile.
+Next: Step 6 (portfolio card).
