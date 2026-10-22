@@ -98,6 +98,10 @@ def main():
     hook = json.load(sys.stdin)
     entry = {"time": datetime.now().isoformat(timespec="seconds"),
              "session": hook.get("session_id")}
+    # Only the scheduling machine speaks, so another machine's sessions don't call claude -p.
+    if os.getenv("HOMEBRIEF_SCHEDULER") != "1":
+        entry["result"] = "skipped: HOMEBRIEF_SCHEDULER is not 1"
+        return log(entry)
     request, reply, started = last_turn(Path(hook["transcript_path"]))
     # The transcript may not hold the final reply yet when the hook fires; the hook input does.
     reply = hook.get("last_assistant_message") or reply

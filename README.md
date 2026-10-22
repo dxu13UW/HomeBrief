@@ -111,8 +111,9 @@ registers the Stop hook. Claude Code asks to approve them the first time. The pa
 `.mcp.json` are relative to the repo, so start `claude` from the repo folder.
 
 **One scheduling machine:** set `HOMEBRIEF_SCHEDULER=1` in `.env` only on the machine that
-runs the scheduled briefing and Discord presence (my PC). Without it, `morning_briefing.py`
-(except `--dry-run`) and `focus_presence.py` exit at once, so a second machine can't double up.
+runs the scheduled briefing, Discord presence and the Stop hook (my PC). Without it,
+`morning_briefing.py` (except `--dry-run`) and `focus_presence.py` exit at once and the Stop hook
+skips without calling `claude -p`, so a second machine can't double up.
 
 **Schedule (Windows):** a Task Scheduler task runs daily at 7:30 AM with "wake the computer"
 on and "Run whether user is logged on or not" (it stores the Windows password; a PIN won't

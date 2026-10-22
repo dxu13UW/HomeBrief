@@ -433,3 +433,14 @@ Mac test: created a Mac .env (SPEAKER_NAME=Bedroom speaker, found by mDNS; sched
 MCP announce failed first (server started with no .env, so empty speaker name); a direct
 Speaker.say() cast "Hello from MacBook" and the user heard it on the speaker.
 Next: Add the line on the PC, test with --dry-run and a real run.
+
+## 2026-10-22 — Stop hook follows HOMEBRIEF_SCHEDULER
+Plan: The scheduler guard covered the briefing and presence but not the Stop hook, which is in
+git, so long Mac turns still ran claude -p (Haiku) and tried to cast to a speaker the Mac can't
+reach from outside home.
+Changed: hooks/announce_done.py skips (logged as "skipped: HOMEBRIEF_SCHEDULER is not 1")
+before reading the transcript unless HOMEBRIEF_SCHEDULER=1. README and .env.example mention the
+hook. Added HOMEBRIEF_SCHEDULER=1 to the PC's .env (gitignored) after pulling 2718977, which
+would otherwise have stopped the 7:30 briefing; dry-run briefing works on the PC.
+Problems: None. Code/config only.
+Next: Discord presence picks up the guard at the next Windows logon.
