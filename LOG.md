@@ -409,3 +409,12 @@ this Mac (all gitignored), so the speaker has no SPEAKER_NAME and the calendar s
 OAuth token yet.
 Next: Create .env from .env.example, copy credentials.json over and run gcal.py --auth, then
 restart Claude Code and test announce() and list_events against the real speaker/calendar.
+
+## 2026-10-21 — README: relative .mcp.json paths
+Plan: Bring the README in line with the relative-path .mcp.json from the Mac.
+Changed: README setup note now says the .mcp.json paths are relative to the repo and `claude`
+must be started from the repo folder (it said they were absolute and needed editing per machine).
+Pulled 9b7a067 on the PC; both MCP servers answer an initialize handshake there with the
+relative paths.
+Problems: None. Docs only.
+Next: Restart Claude Code on the PC so it loads the new .mcp.json.

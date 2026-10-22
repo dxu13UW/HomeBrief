@@ -108,7 +108,7 @@ gitignored.
 
 **MCP servers and hook:** `.mcp.json` registers both servers and `.claude/settings.json`
 registers the Stop hook. Claude Code asks to approve them the first time. The paths in
-`.mcp.json` are absolute, so edit them on another machine.
+`.mcp.json` are relative to the repo, so start `claude` from the repo folder.
 
 **Schedule (Windows):** a Task Scheduler task runs daily at 7:30 AM with "wake the computer"
 on and "Run whether user is logged on or not" (it stores the Windows password; a PIN won't
