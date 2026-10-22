@@ -418,3 +418,18 @@ Pulled 9b7a067 on the PC; both MCP servers answer an initialize handshake there 
 relative paths.
 Problems: None. Docs only.
 Next: Restart Claude Code on the PC so it loads the new .mcp.json.
+
+## 2026-10-21 — Only one machine runs the scheduled jobs
+Plan: User works on both the PC and the Mac and wants only the PC to run the briefing and
+Discord presence, so the speaker and Discord never get doubled. Checked the Mac first: no
+crontab, LaunchAgent or login item for HomeBrief, so nothing was doubling yet. Added a guard
+so it stays that way.
+Changed: morning_briefing.py (real runs, not --dry-run) and presence/focus_presence.py exit
+unless .env has HOMEBRIEF_SCHEDULER=1. Added it to .env.example (empty) and the README. The
+Stop hook is unchanged: it reports on its own session, so it can't double.
+Problems: None yet. The PC's .env must get HOMEBRIEF_SCHEDULER=1 before the 7:30 AM run, or
+the briefing and presence stop there too.
+Mac test: created a Mac .env (SPEAKER_NAME=Bedroom speaker, found by mDNS; scheduler empty).
+MCP announce failed first (server started with no .env, so empty speaker name); a direct
+Speaker.say() cast "Hello from MacBook" and the user heard it on the speaker.
+Next: Add the line on the PC, test with --dry-run and a real run.

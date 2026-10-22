@@ -148,6 +148,8 @@ def main():
     parser.add_argument("--date", type=date.fromisoformat)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if not args.dry_run and os.getenv("HOMEBRIEF_SCHEDULER") != "1":
+        sys.exit("HOMEBRIEF_SCHEDULER=1 is not set in .env: this machine doesn't run the briefing")
 
     now = datetime.now(TZ)
     day = args.date or now.date()

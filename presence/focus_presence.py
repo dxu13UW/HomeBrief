@@ -109,6 +109,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
+    if os.getenv("HOMEBRIEF_SCHEDULER") != "1":
+        sys.exit("HOMEBRIEF_SCHEDULER=1 is not set in .env: this machine doesn't run Discord presence")
     client_id = os.getenv("DISCORD_CLIENT_ID")
     if not client_id:
         sys.exit("Set DISCORD_CLIENT_ID in .env (Discord developer portal > your app > Application ID)")
