@@ -258,3 +258,46 @@ gcal.create_tagged_event. The code has no edit or delete, so the user deletes th
 block by hand.
 Problems: None.
 Next: Rich Presence work during that block; it needs pypresence (ask first) and Windows Python.
+
+## 2026-10-21 — First scheduled briefing didn't run
+Plan: Check the 7:30 AM run.
+Changed: Nothing.
+Problems: Not the model, not the code: the PC was shut down at 12:42 AM and booted at 9:10 AM.
+"Wake the computer" only works from sleep or hibernate, not from a full shutdown (wake timers
+are enabled in the power plan). "Start when available" should have run the missed briefing
+after boot but didn't; Task Scheduler history is turned off, so the reason isn't recorded.
+The task has never run (LastTaskResult 267011).
+Next: User decides: sleep instead of shutting down, and/or a logon backup trigger with a
+once-a-day guard in code.
+
+## 2026-10-21 — Power on by BIOS clock; run without a login
+Plan: Make the 7:30 briefing work even after a full shutdown.
+Changed: User enabled RTC power-on in the BIOS (Advanced > APM) for 7:15 AM daily (outside
+the repo). Decided to switch the task to "Run whether user is logged on or not", since after
+an RTC power-on Windows sits at the login screen and an "only when logged on" task never
+starts. Chosen over Windows auto-login (unlocked desktop) and sleep-only.
+Problems: Not yet tested. Risk: WSL may not start without a desktop session; if so, fall back
+to auto-login or sleep.
+Next: User sets the option and enters their Windows password in Task Scheduler; then start
+the task by hand to test the non-interactive path.
+
+## 2026-10-21 — Scheduled task works without a login
+Plan: Test the task in "Run whether user is logged on or not" mode.
+Changed: The task now stores the user's Windows password (LogonType Password). The PIN was
+rejected, and so was the newly reset Microsoft account password at first: Windows checks a
+locally cached copy of the password, which only updates after one sign-in with the password
+instead of the PIN. After that, saving worked.
+Problems: None. Started the task by hand at 7:33 PM: exit 0, briefing for 10/21 played and
+passed validation with no warnings. WSL runs fine without a desktop session. Claude used the
+current time well ("you're in it now and have about an hour left") and added no focus blocks
+(two [claude] events already that day). With RTC power-on at 7:15 AM, a full shutdown no longer
+stops the 7:30 briefing. If the Windows password changes, the task must be updated.
+Next: Confirm the real 7:30 AM run on 10/22 after a shutdown; then step 6 (portfolio card).
+
+## 2026-10-21 — Planning dates settled
+Plan: Settle the planning dates for the README and the Obsidian note.
+Changed: Nothing; both already say October 18-19. The user had been thinking the project
+through since the 18th and 19th; the Claude Desktop chat itself may have been on the 20th
+(as the export header says), still before any code.
+Problems: None.
+Next: Discord Rich Presence.
