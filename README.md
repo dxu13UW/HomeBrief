@@ -39,7 +39,7 @@ The summary prompt is at the top of [`hooks/announce_done.py`](hooks/announce_do
 | Every calendar event is mentioned; any missing ones are appended as a plain list and logged as a warning | `morning_briefing.py` `validate()` |
 | If `claude -p` fails, speak a plain list of the day's events instead of nothing | `morning_briefing.py` `fallback()` |
 | Summary is one sentence, at most 25 words, no file names, paths or code words, cut at a comma if too long | `hooks/announce_done.py` `validate()` |
-| New events only between 8 AM and 10 PM, on one day, never overlapping, at most 3 Claude events per day | `calendar_mcp/gcal.py` `check_new_event()` |
+| New events only between 8 AM and 10 PM, on one day, never overlapping, at most 5 Claude events per day | `calendar_mcp/gcal.py` `check_new_event()` |
 | Every event Claude creates is tagged `[claude]` (added by code, not trusted to the model) | `gcal.py` `create_tagged_event()` |
 | Claude can't edit or delete anything: no such function exists | `gcal.py` |
 | The headless briefing run has no built-in tools (`--tools ""`), only the two calendar tools | `morning_briefing.py` `run_claude()` |

@@ -28,7 +28,7 @@ from gcal import TZ, day_events  # noqa: E402
 RELAY = ROOT / "presence" / "discord_relay.ps1"
 LOG_FILE = ROOT / "logs" / "presence.log"
 CHECK_EVERY = 30  # seconds between checks of the current block
-REFRESH_EVERY = 300  # seconds between calendar reads
+REFRESH_EVERY = 60  # seconds between calendar reads, so new blocks show up within a minute
 
 
 def log(message: str) -> None:
@@ -44,6 +44,14 @@ def current_block(events: list[dict], now: datetime) -> dict | None:
             if datetime.fromisoformat(e["start"]) <= now < datetime.fromisoformat(e["end"]):
                 return e
     return None
+
+
+def next_change(events: list[dict], now: datetime) -> datetime | None:
+    """The next moment a [claude] block starts or ends, so presence switches on time."""
+    times = [datetime.fromisoformat(e[k]) for e in events
+             if e["claude"] and not e["all_day"] for k in ("start", "end")]
+    future = [t for t in times if t > now]
+    return min(future) if future else None
 
 
 def activity(block: dict) -> dict:
@@ -129,7 +137,11 @@ def main():
                 input("Presence set. Press Enter to clear it and exit...")
             discord.close()
             return
-        time.sleep(CHECK_EVERY)
+        # Sleep until the next block boundary (start or end) if that comes before the next check.
+        now = datetime.now(TZ)
+        change = next_change(events, now)
+        wait = CHECK_EVERY if change is None else min(CHECK_EVERY, (change - now).total_seconds())
+        time.sleep(max(wait, 0.2))
 
 
 if __name__ == "__main__":

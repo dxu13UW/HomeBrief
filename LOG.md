@@ -342,3 +342,43 @@ Changed: Nothing.
 Problems: None. presence.log: "20:30:18 presence: cleared"; the process keeps running for the
 next block. The user saw the new "Focus Block: <topic>" wording on their profile.
 Next: Step 6 (portfolio card).
+
+## 2026-10-21 — Presence switches exactly at block boundaries
+Plan: The user saw Discord's countdown reach 00:00, restart at 90:00, and the status vanish
+15-20 s later. Code, not model: the loop checked every 30 s regardless of block times, so the
+clear came at 20:30:18. Discord shows that odd timer when an activity outlives its end time.
+Changed: focus_presence.py next_change(): the loop sleeps until the next [claude] block start
+or end when that comes before the next 30 s check. Restarted the logon task.
+Problems: None in the offline test (wakes at 20:30:00 exactly; ignores the user's own and
+all-day events). Not yet seen live.
+Next: Live test with a short tagged block, if the user approves the calendar write.
+
+## 2026-10-21 — Idea: email in the morning briefing (deferred)
+Plan: User asked whether Claude could read their inbox and have the speaker read out a 2FA
+code. Problems with that version: the request can't come through the speaker (its mic only
+feeds Gemini); speaking secret codes aloud defeats their purpose and leaves them in logs; and
+emails are untrusted input that could carry instructions for the model. Proposed instead:
+an email line in the morning briefing (sender and subject only, which emails need a reply),
+with no tools during that run and code that blocks codes, links and phone numbers. Gmail
+read access is a restricted Google scope, so more OAuth setup.
+Changed: Nothing.
+Next: Revisit after the presence work (user's call). Kept test events as calendar history;
+past days don't affect the briefing.
+
+## 2026-10-21 — Presence timing confirmed live
+Plan: Live test with a 3-minute tagged block, 9:20-9:23 PM (user approved).
+Changed: Nothing.
+Problems: None. presence.log: set at 21:20:00, cleared at 21:23:00, both on the second.
+Known gap: the calendar is re-read only every 5 minutes, so a block created less than 5
+minutes before it starts can appear late.
+Next: Shorten the calendar re-read interval; commit.
+
+## 2026-10-21 — Daily cap 5, calendar re-read every minute
+Plan: User wanted a 1-minute visual retest, but today was at the 3-event cap and the presence
+script only re-read the calendar every 5 minutes, so a block created a minute ahead would be
+missed. User chose to raise the cap rather than delete a test event or bypass the rule.
+Changed: gcal.py MAX_CLAUDE_PER_DAY 3 -> 5 (README updated). focus_presence.py REFRESH_EVERY
+300 -> 60 s. Restarted the logon task. Created "Presence timing retest" 21:29-21:30.
+Problems: None. A block created 3 minutes ahead was picked up; presence.log: set at 21:29:00,
+cleared at 21:30:00, both on the second. The user confirmed the profile switched on time.
+Next: Commit and push.

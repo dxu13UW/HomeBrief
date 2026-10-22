@@ -28,7 +28,7 @@ TAG = "[claude]"
 EARLIEST = time(8, 0)
 LATEST = time(22, 0)
 MAX_TITLE = 100
-MAX_CLAUDE_PER_DAY = 3  # cap on [claude] events per day, so repeated runs can't pile up
+MAX_CLAUDE_PER_DAY = 5  # cap on [claude] events per day, so repeated runs can't pile up
 
 load_dotenv(ROOT / ".env")
 TZ = ZoneInfo(os.getenv("TIME_ZONE", "America/Los_Angeles"))
