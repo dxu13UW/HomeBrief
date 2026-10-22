@@ -382,3 +382,30 @@ Changed: gcal.py MAX_CLAUDE_PER_DAY 3 -> 5 (README updated). focus_presence.py R
 Problems: None. A block created 3 minutes ahead was picked up; presence.log: set at 21:29:00,
 cleared at 21:30:00, both on the second. The user confirmed the profile switched on time.
 Next: Commit and push.
+
+## 2026-10-21 — Focus block for MATH126 HW
+Plan: User asked for a 10/22 7:00-8:30 PM focus block: MATH126 homework first, leftover time
+for Artifact 3 development. I first misread "leftover time" as 8:30-10:00 and proposed two
+blocks; user corrected it. Chose one block (option A) over a fixed split because the homework
+length is unknown.
+Changed: Created "Focus: MATH126 HW" 10/22 19:00-20:30, description tagged [claude]. Made
+through the claude.ai Google Calendar connector, not gcal.create_tagged_event, because the
+local calendar/speaker MCP servers failed to start: .mcp config points at
+/home/KO300/ELIXIR/CS490/homebrief/.venv/bin/python, which doesn't exist on this Mac. Checked
+the write rules by hand (day was empty, inside 8 AM-10 PM, 1 of max 3 tagged events).
+Problems: Model misread the request once (caught before writing). Code side: MCP server path
+from another machine.
+Next: Fix the MCP server Python path; Discord presence and the morning briefing should pick up
+this block tomorrow.
+
+## 2026-10-21 — Fix MCP server paths on the Mac
+Plan: Make the speaker and calendar MCP servers start on this Mac.
+Changed: .mcp.json now uses relative paths (.venv/bin/python, speaker_mcp/server.py) so it works
+on both the Mac and the PC (was /home/KO300/ELIXIR/CS490/homebrief/...). Both servers answer an MCP
+initialize handshake.
+Problems: Code/config, not the model. Absolute paths broke whenever the other machine pulled;
+relative paths rely on Claude Code starting servers in the project folder. .env, credentials.json and token.json were never copied to
+this Mac (all gitignored), so the speaker has no SPEAKER_NAME and the calendar server has no
+OAuth token yet.
+Next: Create .env from .env.example, copy credentials.json over and run gcal.py --auth, then
+restart Claude Code and test announce() and list_events against the real speaker/calendar.

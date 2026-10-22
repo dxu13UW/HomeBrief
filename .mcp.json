@@ -2,17 +2,17 @@
   "mcpServers": {
     "speaker": {
       "type": "stdio",
-      "command": "/home/KO300/ELIXIR/CS490/homebrief/.venv/bin/python",
+      "command": ".venv/bin/python",
       "args": [
-        "/home/KO300/ELIXIR/CS490/homebrief/speaker_mcp/server.py"
+        "speaker_mcp/server.py"
       ],
       "env": {}
     },
     "calendar": {
       "type": "stdio",
-      "command": "/home/KO300/ELIXIR/CS490/homebrief/.venv/bin/python",
+      "command": ".venv/bin/python",
       "args": [
-        "/home/KO300/ELIXIR/CS490/homebrief/calendar_mcp/server.py"
+        "calendar_mcp/server.py"
       ],
       "env": {}
     }
