@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -115,6 +116,8 @@ def main():
     if not client_id:
         sys.exit("Set DISCORD_CLIENT_ID in .env (Discord developer portal > your app > Application ID)")
 
+    if not args.once:
+        log("started")
     discord = Discord(client_id)
     events, read_at, shown, last_error = [], 0.0, "unset", None
     while True:
@@ -146,5 +149,16 @@ def main():
         time.sleep(max(wait, 0.2))
 
 
+def _exit_on_signal(signum, _frame):
+    sys.exit(f"stopped by {signal.Signals(signum).name}")
+
+
 if __name__ == "__main__":
-    main()
+    # Log why the process ends, so a presence that silently stops can be traced.
+    signal.signal(signal.SIGTERM, _exit_on_signal)
+    signal.signal(signal.SIGHUP, _exit_on_signal)
+    try:
+        main()
+    except BaseException as e:
+        log(f"exited: {type(e).__name__}: {e}")
+        raise

@@ -452,3 +452,14 @@ gcal.create_tagged_event (code added the [claude] tag and checked the write rule
 already had two [claude] focus blocks (9:00-10:30, 2:00-3:30); this is the third of max 5.
 Problems: None.
 Next: Discord presence should show it from noon.
+
+## 2026-10-24 — Discord presence stopped silently
+Plan: User saw a focus block (2:00-3:30 PM) on the calendar but no Discord presence.
+Changed: Found the presence process gone: the logon task started it at 11:00 AM, it logged
+"Discord is not running" at 11:01, then nothing (it also missed the noon CS372 block). Task
+Scheduler showed the task "Ready" with result 0, and nothing captured why it ended. Restarted the
+task; presence came back on the current block. focus_presence.py now logs "started" and
+"exited: <reason>", and turns SIGTERM/SIGHUP into a logged exit; tested with SIGTERM.
+Problems: Code/ops, not the model. Root cause still unknown; the new log lines should show it
+next time. A SIGKILL (e.g. WSL shutting down) still can't be logged.
+Next: If it stops again, check presence.log for the exit line.
