@@ -444,3 +444,11 @@ hook. Added HOMEBRIEF_SCHEDULER=1 to the PC's .env (gitignored) after pulling 27
 would otherwise have stopped the 7:30 briefing; dry-run briefing works on the PC.
 Problems: None. Code/config only.
 Next: Discord presence picks up the guard at the next Windows logon.
+
+## 2026-10-24 — Focus block for CS372
+Plan: User asked for a focus block on CS372 Computer Architecture, 12:00-1:00 PM today.
+Changed: Created "Focus: CS372 Computer Architecture" 10/24 12:00-13:00 through
+gcal.create_tagged_event (code added the [claude] tag and checked the write rules). The day
+already had two [claude] focus blocks (9:00-10:30, 2:00-3:30); this is the third of max 5.
+Problems: None.
+Next: Discord presence should show it from noon.
