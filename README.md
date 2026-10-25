@@ -181,5 +181,6 @@ which is covered by the course's Claude Code access; the hook uses Haiku for its
   would need a self-bot, which Discord bans.
 
 `CLAUDE.md` holds the full constraints and rules every session follows. The plan, every change
-and the dead ends are in [`LOG.md`](LOG.md); the planning conversation that came before any
+and the dead ends are in [`LOG.md`](LOG.md); features not built yet are in
+[`PLANS.md`](PLANS.md); the planning conversation that came before any
 code is in [`docs/planning-conversation.md`](docs/planning-conversation.md).

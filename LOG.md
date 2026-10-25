@@ -515,3 +515,14 @@ Problems: None. Tested quiet-hour boundaries (22:59 speak, 23:00 quiet, 7:29 qui
 five queued runs, the overnight text, and the hook script run by full path from another folder.
 Next: The Mac has its own user settings, so the hook stays off there (it's also guarded by
 HOMEBRIEF_SCHEDULER).
+
+## 2026-10-24 — PLANS.md for future features
+Plan: User wants a place for features not built yet, starting with updating and deleting focus
+blocks through the claude.ai Google Calendar connector.
+Changed: Added PLANS.md with that feature, the CLAUDE.md rules it must keep, the open problem
+(the connector's edits aren't checked in code) with two ways to solve it, and the separate
+calendar safeguard. README links to it. Also added playing on the PC speakers when the Google Home
+is unavailable, with its open problems (no sound output when nobody is logged in at 7:30, and
+whether it should stay quiet at night).
+Problems: None. Docs only.
+Next: Decide how connector edits get checked in code before building it.
