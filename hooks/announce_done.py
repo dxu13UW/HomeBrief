@@ -2,7 +2,8 @@
 
 Started by announce_done.sh with the hook's JSON input on stdin and HOMEBRIEF_HOOK=1 set.
 Plain code picks out the request and final reply, skips short turns, validates the
-model's sentence, and speaks it. Every run is logged to logs/hook.jsonl.
+model's sentence, and speaks it. During quiet hours (night until the morning briefing) the
+sentence is queued instead, and the briefing plays it. Every run is logged to logs/hook.jsonl.
 """
 
 import json
@@ -11,7 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,6 +22,7 @@ from dotenv import load_dotenv  # noqa: E402
 from speaker import Speaker, clean  # noqa: E402
 
 LOG_FILE = ROOT / "logs" / "hook.jsonl"
+QUEUE_FILE = ROOT / "logs" / "hook_queue.jsonl"  # read and cleared by morning_briefing.py
 MAX_WORDS = 25
 CLAUDE_TIMEOUT = 90  # seconds
 FALLBACK = "Claude finished a task."
@@ -121,6 +123,12 @@ def main():
         spoken = FALLBACK
     entry["spoken"] = spoken
 
+    if quiet_now(datetime.now().time()):
+        with QUEUE_FILE.open("a") as f:
+            f.write(json.dumps({"time": entry["time"], "spoken": spoken}) + "\n")
+        entry["result"] = "queued for the morning briefing"
+        return log(entry)
+
     speaker = Speaker(os.getenv("SPEAKER_NAME", ""), os.getenv("SPEAKER_IP") or None,
                       int(os.getenv("HTTP_PORT", "8765")))
     try:
@@ -129,6 +137,13 @@ def main():
     except Exception as e:
         entry["result"] = f"speaker error: {e}"
     log(entry)
+
+
+def quiet_now(now: time) -> bool:
+    """Night: from HOOK_QUIET_START until the morning briefing (BRIEFING_TIME)."""
+    start = time.fromisoformat(os.getenv("HOOK_QUIET_START", "23:00"))
+    end = time.fromisoformat(os.getenv("BRIEFING_TIME", "07:30"))
+    return now >= start or now < end if start > end else start <= now < end
 
 
 def log(entry: dict) -> None:

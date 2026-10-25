@@ -499,3 +499,19 @@ noted that the Stop hook and presence run on the scheduling machine only and tha
 presence.log records start and exit.
 Problems: None. Docs only.
 Next: None.
+
+## 2026-10-24 — Stop hook for every project, quiet at night
+Plan: User assumed the speaker announced any long Claude Code task; it only covered sessions
+started in this repo, because the hook lived in the project's .claude/settings.json. They want
+it global, but silent at night, with those summaries played at the morning briefing instead.
+Changed: Moved the Stop hook to ~/.claude/settings.json (full path to announce_done.sh) and
+deleted the project .claude/settings.json so HomeBrief sessions don't fire it twice.
+announce_done.py: from HOOK_QUIET_START (default 23:00) until BRIEFING_TIME it still writes and
+validates the sentence but appends it to logs/hook_queue.jsonl instead of speaking.
+morning_briefing.py: after the briefing it plays "Overnight, Claude finished N tasks" with up to
+three queued sentences ("and N more in the log"), and deletes the queue only once it played;
+--dry-run prints it without clearing. README, CLAUDE.md, .env.example updated.
+Problems: None. Tested quiet-hour boundaries (22:59 speak, 23:00 quiet, 7:29 quiet, 7:30 speak),
+five queued runs, the overnight text, and the hook script run by full path from another folder.
+Next: The Mac has its own user settings, so the hook stays off there (it's also guarded by
+HOMEBRIEF_SCHEDULER).

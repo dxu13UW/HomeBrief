@@ -103,6 +103,11 @@ The Stop hook runs `claude -p`, which can trigger the Stop hook again. Before
 calling `claude -p`, the hook sets `HOMEBRIEF_HOOK=1`; the hook exits
 immediately if that variable is already set. Do not remove this guard.
 
+The hook is registered in my user settings, so it runs for Claude Code sessions in every
+project, not only this repo. From `HOOK_QUIET_START` (11 PM) until the morning briefing it
+queues its sentence in `logs/hook_queue.jsonl` instead of speaking; the briefing plays the
+queue after the day's plan.
+
 ## Configuration and secrets
 
 - Settings live in `.env` (gitignored): speaker name, local HTTP port, time zone,

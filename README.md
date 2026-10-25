@@ -3,7 +3,8 @@
 A daily scheduler that talks through my Google Home speaker. Every morning Claude reads my
 calendar, plans the day, may add focus blocks, and writes a short spoken briefing; plain code
 checks what Claude wrote and plays it on the speaker. When a Claude Code session finishes a
-long task, the speaker says what was done in one sentence.
+long task, in any project, the speaker says what was done in one sentence (held until the
+morning briefing if it's the middle of the night).
 
 CS490 Artifact 3 ("AI Inside It"). Runs entirely on Claude Code (`claude -p` and MCP servers);
 there is no Claude API key and no per-call billing.
@@ -15,7 +16,7 @@ there is no Claude API key and no per-call billing.
 | Morning briefing (`morning_briefing.py`) | Daily at 7:30 AM (Windows Task Scheduler) | Code fetches today's events → `claude -p` plans the day, may add focus blocks, writes the briefing → code validates it → speaker |
 | Speaker MCP server (`speaker_mcp/`) | Whenever Claude Code calls `announce(text)` | Code cleans the text, makes speech with gTTS, casts it to the speaker |
 | Calendar MCP server (`calendar_mcp/`) | Whenever Claude Code calls `list_events` / `create_tagged_event` | Code reads events, or checks the write rules and creates a `[claude]` event |
-| Stop hook (`hooks/announce_done.sh`) | End of every Claude Code turn in this project that takes 60 s or more, on the scheduling machine only | `claude -p` writes one sentence about what was done → code validates it → speaker |
+| Stop hook (`hooks/announce_done.sh`) | End of every Claude Code turn, in any project, that takes 60 s or more, on the scheduling machine only | `claude -p` writes one sentence about what was done → code validates it → speaker. From 11 PM until the 7:30 briefing it's queued instead, and the briefing reads out up to three after the day's plan |
 | Discord presence (`presence/`) | Always, while I'm logged in to Windows on the PC | During a `[claude]` focus block, Discord shows "Playing HomeBrief", the block's title, its time span and a countdown; cleared when it ends. No model: Claude already chose the blocks |
 
 ## Focus blocks
@@ -90,7 +91,8 @@ Check the raw model output first, then decide which side failed:
 | Log | Contains |
 | --- | --- |
 | `logs/briefings.jsonl` | Each briefing: the events, Claude's raw text, warnings, what was spoken, focus blocks after the run, errors |
-| `logs/hook.jsonl` | Each hook run: turn length, Claude's raw sentence, what was spoken, or why it was skipped |
+| `logs/hook.jsonl` | Each hook run: turn length, Claude's raw sentence, what was spoken or queued, or why it was skipped |
+| `logs/hook_queue.jsonl` | Sentences held overnight; the briefing plays them and deletes the file only once they're heard |
 | `logs/announce.log` | Each `announce()` call: raw text, spoken text, result |
 | `logs/hook.err` | Errors from the background hook worker |
 | `logs/presence.log` | When presence starts and why it exits, each presence change, and errors (logged once until they change) |
@@ -124,9 +126,11 @@ Desktop OAuth client, save it as `credentials.json`, then run
 ("In production") or the login expires every 7 days. `credentials.json` and `token.json` are
 gitignored.
 
-**MCP servers and hook:** `.mcp.json` registers both servers and `.claude/settings.json`
-registers the Stop hook. Claude Code asks to approve them the first time. The paths in
-`.mcp.json` are relative to the repo, so start `claude` from the repo folder.
+**MCP servers and hook:** `.mcp.json` registers both servers; Claude Code asks to approve them
+the first time. The paths are relative to the repo, so start `claude` from the repo folder. The
+Stop hook covers every project, so it's registered in my user settings (`~/.claude/settings.json`)
+as a Stop hook running `<repo>/hooks/announce_done.sh` by its full path, not in the repo.
+Quiet hours run from `HOOK_QUIET_START` (default 23:00) to `BRIEFING_TIME` in `.env`.
 
 **Two machines:** the repo is on my PC (WSL) and my MacBook, synced through GitHub (pull
 before working, push after). The PC is the scheduling machine: it runs the briefing, Discord

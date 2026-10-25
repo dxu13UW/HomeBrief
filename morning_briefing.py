@@ -29,6 +29,8 @@ from speaker import MAX_WORDS, Speaker, clean  # noqa: E402
 
 PROMPT = ROOT / "prompts" / "morning_briefing.md"
 LOG_FILE = ROOT / "logs" / "briefings.jsonl"
+QUEUE_FILE = ROOT / "logs" / "hook_queue.jsonl"  # Stop hook sentences held back overnight
+MAX_QUEUED = 3  # overnight task sentences read out after the briefing
 CLAUDE_TIMEOUT = 300  # seconds
 FOCUS_ON = ("You may add one focus block with create_tagged_event, at least 60 "
             "minutes, only in free time after now, starting no earlier than {earliest} and "
@@ -89,6 +91,19 @@ def earliest_text(day: date) -> str:
     if first == EARLIEST:
         return f"{first:%-I:%M %p}"
     return f"{first:%-I:%M %p} (an hour after my last class today; never during or near a class)"
+
+
+def overnight_text() -> str:
+    """The Stop hook sentences queued overnight, as one spoken paragraph ('' if none).
+    Each sentence was already validated by the hook."""
+    if not QUEUE_FILE.exists():
+        return ""
+    items = [json.loads(line)["spoken"] for line in QUEUE_FILE.read_text().splitlines() if line]
+    if not items:
+        return ""
+    head = "Overnight, Claude finished " + ("one task." if len(items) == 1 else f"{len(items)} tasks.")
+    more = [f"And {len(items) - MAX_QUEUED} more in the log."] if len(items) > MAX_QUEUED else []
+    return " ".join([head, *items[:MAX_QUEUED], *more])
 
 
 def prompt_events(events: list[dict]) -> str:
@@ -187,14 +202,21 @@ def main():
     # Re-read so the log shows any focus blocks Claude added.
     entry["events_after"] = [e for e in day_events(day) if e["claude"]]
 
+    overnight = overnight_text()
+    entry["overnight"] = overnight
     if args.dry_run:
         print(spoken)
+        if overnight:
+            print(overnight)
         entry["result"] = "printed"
     else:
         speaker = Speaker(os.getenv("SPEAKER_NAME", ""), os.getenv("SPEAKER_IP") or None,
                           int(os.getenv("HTTP_PORT", "8765")))
         try:
             speaker.say(spoken)
+            if overnight:
+                speaker.say(overnight)
+                QUEUE_FILE.unlink()  # only once heard; otherwise they wait for the next briefing
             entry["result"] = "played"
         except Exception as e:
             entry["result"] = f"speaker error: {e}"
