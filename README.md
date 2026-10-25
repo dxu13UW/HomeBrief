@@ -165,8 +165,12 @@ Discord's "Share your detected activities" is on.
 
 ## Cost
 
-Everything goes through Claude Code. Claude Code reports about $0.05 of usage per briefing,
-which is covered by the course's Claude Code access; the hook uses Haiku for its one sentence.
+Nothing is billed per call. Every model call is `claude -p` signed in with my claude.ai account
+(no `ANTHROPIC_API_KEY`), so it counts toward my plan's usage limits instead of charging money.
+The `cost_usd` in `logs/briefings.jsonl` (about $0.05–0.07 per briefing) is Claude Code's estimate
+of what the run would cost at API prices, a rough measure of its size, not a charge. The Stop hook
+uses Haiku for its one sentence to keep that small. If an API key were ever set where Claude Code
+reads it, Claude Code would use it and bill it, so it stays unset.
 
 ## Design decisions
 

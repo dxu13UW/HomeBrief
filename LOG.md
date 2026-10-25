@@ -526,3 +526,12 @@ is unavailable, with its open problems (no sound output when nobody is logged in
 whether it should stay quiet at night).
 Problems: None. Docs only.
 Next: Decide how connector edits get checked in code before building it.
+
+## 2026-10-24 — README: what the cost figure means
+Plan: User asked why a briefing "cost" $0.07 when claude -p runs on their subscription.
+Changed: Checked that Claude Code is signed in with claude.ai (authMethod claude.ai) and no
+ANTHROPIC_API_KEY is set in the shell, shell config or .env. Reworded the README Cost section:
+cost_usd is Claude Code's API-price estimate of a run's size, not a charge; runs count toward
+the plan's usage limits.
+Problems: None. Docs only; the old wording made the estimate sound like spending.
+Next: None.
