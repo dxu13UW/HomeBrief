@@ -463,3 +463,39 @@ task; presence came back on the current block. focus_presence.py now logs "start
 Problems: Code/ops, not the model. Root cause still unknown; the new log lines should show it
 next time. A SIGKILL (e.g. WSL shutting down) still can't be logged.
 Next: If it stops again, check presence.log for the exit line.
+
+## 2026-10-24 — Keep focus blocks clear of classes
+Plan: User gave their class schedule (TCSS 372 M/W 9:30-10:50, TMATH 126 T/Th 10:10-12:10,
+TCSS 490 M 3:40-5:40) and asked that focus blocks stay an hour clear of classes, and on class
+days not start until an hour after the last class. The second rule covers the first.
+Changed: gcal.py has CLASSES and earliest_start(); check_new_event() rejects anything starting
+before it (Mon 6:40 PM, Tue/Thu 1:10 PM, Wed 11:50 AM; Fri-Sun stay 8 AM). Enforced in code,
+so it holds for the briefing, the MCP tool and interactive sessions alike. The briefing's focus
+rule now tells Claude today's earliest start; the MCP tool description lists the class-day
+times; CLAUDE.md and README document the rule.
+Problems: None. Tested every weekday plus boundary times (Mon 6:00 rejected, 6:40 allowed).
+Next: Update CLASSES when the quarter ends; the rule has no end date or holiday list.
+
+## 2026-10-24 — Later earliest start, one generated block a day
+Plan: User found 8 AM too early for focus blocks: earliest start 11:30 AM. The briefing should
+add at most one block per day, while the user can still ask for more in a session.
+Changed: gcal.py EARLIEST is 11:30 AM (class days still use an hour after the last class when
+that's later, so Wed stays 11:50 AM). MAX_CLAUDE_PER_DAY reads HOMEBRIEF_MAX_CLAUDE_PER_DAY
+(default 5); morning_briefing.py passes 1 in the calendar server's env, so the cap is enforced
+in code for the briefing only. The briefing's focus rule now says "one focus block". Tool
+description, README and CLAUDE.md updated.
+Problems: None. Tested 11:00 rejected / 11:30 allowed on Friday, Wed 11:30 rejected / 11:50
+allowed, a second block allowed at cap 5 and rejected at cap 1, and that claude -p passes the
+config env to the server.
+Next: None.
+
+## 2026-10-24 — README as current state
+Plan: User wants the README to describe the project as it is now and leave the history to
+LOG.md.
+Changed: Replaced the chronological "Project history" section with "Design decisions" (the
+lasting choices, with links to CLAUDE.md, LOG.md and the planning conversation). Added a "Focus
+blocks" section with all the rules in one table, described the PC/Mac setup under Setup, and
+noted that the Stop hook and presence run on the scheduling machine only and that
+presence.log records start and exit.
+Problems: None. Docs only.
+Next: None.

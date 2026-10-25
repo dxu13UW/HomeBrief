@@ -80,7 +80,20 @@ output in `logs/` before changing any code.
 
 - Claude may only create events whose description contains the tag `[claude]`.
 - Claude may edit or delete only events carrying that tag. Never touch my own events.
-- No new events before 8:00 AM or after 10:00 PM, and none overlapping existing events.
+- No new events before 11:30 AM or after 10:00 PM, and none overlapping existing events.
+- The morning briefing adds at most one focus block per day (code caps its run at 1 `[claude]`
+  event). When I ask in a session I can have more, up to 5 per day.
+- Class days: no new events until one hour after the day's last class ends (which also keeps
+  an hour clear before and after every class). My classes (not on the calendar; kept in
+  `CLASSES` in `calendar_mcp/gcal.py`):
+
+  | Course      | Days | Time          | Earliest focus block |
+  | ----------- | ---- | ------------- | -------------------- |
+  | TCSS 372 A  | M/W  | 9:30 – 10:50  | Wed 11:50 AM         |
+  | TMATH 126 B | T/Th | 10:10 – 12:10 | Tue/Thu 1:10 PM      |
+  | TCSS 490 A  | M    | 3:40 – 5:40   | Mon 6:40 PM          |
+
+  Friday to Sunday have no classes, so only the 11:30 AM – 10 PM rule applies.
 - Headless runs (`claude -p`) may create tagged events but never delete anything.
   Interactive sessions must show me the change and ask before writing.
 

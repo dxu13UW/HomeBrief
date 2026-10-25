@@ -32,8 +32,10 @@ def create_tagged_event(title: str, start: str, end: str, note: str = "") -> dic
     """Add an event (for example a focus block) to the user's calendar.
 
     start and end are local times as YYYY-MM-DDTHH:MM. The event must be between
-    8:00 AM and 10:00 PM on a single day and must not overlap any existing event;
-    otherwise it is rejected with the reason. The event is tagged [claude]
+    11:30 AM and 10:00 PM on a single day and must not overlap any existing event.
+    On class days it must start at least an hour after the last class: Mondays 6:40 PM,
+    Tuesdays and Thursdays 1:10 PM, Wednesdays 11:50 AM. At most 5 Claude events per
+    day. Otherwise it is rejected with the reason. The event is tagged [claude]
     automatically. Use note for a short reason the block was suggested.
     """
     try:

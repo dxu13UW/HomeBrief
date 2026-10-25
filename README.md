@@ -15,8 +15,26 @@ there is no Claude API key and no per-call billing.
 | Morning briefing (`morning_briefing.py`) | Daily at 7:30 AM (Windows Task Scheduler) | Code fetches today's events → `claude -p` plans the day, may add focus blocks, writes the briefing → code validates it → speaker |
 | Speaker MCP server (`speaker_mcp/`) | Whenever Claude Code calls `announce(text)` | Code cleans the text, makes speech with gTTS, casts it to the speaker |
 | Calendar MCP server (`calendar_mcp/`) | Whenever Claude Code calls `list_events` / `create_tagged_event` | Code reads events, or checks the write rules and creates a `[claude]` event |
-| Stop hook (`hooks/announce_done.sh`) | End of every Claude Code turn in this project that takes 60 s or more | `claude -p` writes one sentence about what was done → code validates it → speaker |
-| Discord presence (`presence/`) | Always, while I'm logged in to Windows | During a `[claude]` focus block, Discord shows "Playing HomeBrief", the block's title, its time span and a countdown; cleared when it ends. No model: Claude already chose the blocks |
+| Stop hook (`hooks/announce_done.sh`) | End of every Claude Code turn in this project that takes 60 s or more, on the scheduling machine only | `claude -p` writes one sentence about what was done → code validates it → speaker |
+| Discord presence (`presence/`) | Always, while I'm logged in to Windows on the PC | During a `[claude]` focus block, Discord shows "Playing HomeBrief", the block's title, its time span and a countdown; cleared when it ends. No model: Claude already chose the blocks |
+
+## Focus blocks
+
+A focus block is a calendar event with `[claude]` in its description. Claude creates them
+through `create_tagged_event`: the morning briefing may add one, and I can ask for more in any
+Claude Code session in this repo (on the PC, or on my MacBook when I'm away). Code enforces the
+rules, whoever asks:
+
+| Rule | Value |
+| --- | --- |
+| Time window | 11:30 AM to 10 PM, on one day, never overlapping another event |
+| Class days | Not before an hour after the last class: Mon 6:40 PM, Tue/Thu 1:10 PM, Wed 11:50 AM |
+| Per day | 1 from the morning briefing; up to 5 when I ask |
+| Changes | Claude can't edit or delete events; there is no such function |
+
+My class schedule (TCSS 372 M/W 9:30–10:50, TMATH 126 T/Th 10:10–12:10, TCSS 490 M 3:40–5:40)
+is `CLASSES` in `calendar_mcp/gcal.py`, because the classes aren't on the calendar. Voice-created
+events from "Hey Google" can't carry the tag, so they never count as focus blocks.
 
 ## Who is responsible for what
 
@@ -24,7 +42,7 @@ The model's part is kept small so that when something goes wrong I can tell whic
 
 **Claude (the model) decides and writes:**
 - What matters today: order of events, overlaps, free gaps.
-- Whether to add focus blocks, and when (at most two per briefing).
+- Whether to add a focus block, and when (at most one per briefing; more only when I ask in a session).
 - The words of the morning briefing and of the one-sentence task summaries.
 
 The model's whole job for the briefing is in one file: [`prompts/morning_briefing.md`](prompts/morning_briefing.md).
@@ -39,7 +57,7 @@ The summary prompt is at the top of [`hooks/announce_done.py`](hooks/announce_do
 | Every calendar event is mentioned; any missing ones are appended as a plain list and logged as a warning | `morning_briefing.py` `validate()` |
 | If `claude -p` fails, speak a plain list of the day's events instead of nothing | `morning_briefing.py` `fallback()` |
 | Summary is one sentence, at most 25 words, no file names, paths or code words, cut at a comma if too long | `hooks/announce_done.py` `validate()` |
-| New events only between 8 AM and 10 PM, on one day, never overlapping, at most 5 Claude events per day | `calendar_mcp/gcal.py` `check_new_event()` |
+| Focus block rules above (time window, class days, per-day cap) | `calendar_mcp/gcal.py` `check_new_event()`, `earliest_start()` |
 | Every event Claude creates is tagged `[claude]` (added by code, not trusted to the model) | `gcal.py` `create_tagged_event()` |
 | Claude can't edit or delete anything: no such function exists | `gcal.py` |
 | The headless briefing run has no built-in tools (`--tools ""`), only the two calendar tools | `morning_briefing.py` `run_claude()` |
@@ -75,7 +93,7 @@ Check the raw model output first, then decide which side failed:
 | `logs/hook.jsonl` | Each hook run: turn length, Claude's raw sentence, what was spoken, or why it was skipped |
 | `logs/announce.log` | Each `announce()` call: raw text, spoken text, result |
 | `logs/hook.err` | Errors from the background hook worker |
-| `logs/presence.log` | Each Discord presence change, and errors (logged once until they change) |
+| `logs/presence.log` | When presence starts and why it exits, each presence change, and errors (logged once until they change) |
 
 If the raw text is fine but the speech is wrong, it's the code. If the raw text breaks the
 rules, it's the model, and the validator should have caught it.
@@ -110,10 +128,12 @@ gitignored.
 registers the Stop hook. Claude Code asks to approve them the first time. The paths in
 `.mcp.json` are relative to the repo, so start `claude` from the repo folder.
 
-**One scheduling machine:** set `HOMEBRIEF_SCHEDULER=1` in `.env` only on the machine that
-runs the scheduled briefing, Discord presence and the Stop hook (my PC). Without it,
-`morning_briefing.py` (except `--dry-run`) and `focus_presence.py` exit at once and the Stop hook
-skips without calling `claude -p`, so a second machine can't double up.
+**Two machines:** the repo is on my PC (WSL) and my MacBook, synced through GitHub (pull
+before working, push after). The PC is the scheduling machine: it runs the briefing, Discord
+presence and the Stop hook, and its `.env` has `HOMEBRIEF_SCHEDULER=1`. The Mac leaves that
+unset, so there `morning_briefing.py` (except `--dry-run`) and `focus_presence.py` exit at once
+and the Stop hook skips; I use it to create focus blocks when I'm away. Each machine has its own
+gitignored `.env`, `credentials.json` and `token.json`.
 
 **Schedule (Windows):** a Task Scheduler task runs daily at 7:30 AM with "wake the computer"
 on and "Run whether user is logged on or not" (it stores the Windows password; a PIN won't
@@ -144,29 +164,18 @@ Discord's "Share your detected activities" is on.
 Everything goes through Claude Code. Claude Code reports about $0.05 of usage per briefing,
 which is covered by the course's Claude Code access; the hook uses Haiku for its one sentence.
 
-## Project history
+## Design decisions
 
-**Planning first (October 18–19).** Before any code was written, I planned the project in
-Claude Desktop: I asked it many questions and chose from the options it gave me. The full
-conversation is in [`docs/planning-conversation.md`](docs/planning-conversation.md). The main
-decisions:
 - **No voice input.** Google shut down Conversational Actions, and the speaker's mic only feeds
   Gemini, so there's no supported way to send my speech to Claude.
-- **Claude doesn't prompt Gemini.** Two models in a chain would make it impossible to tell which
-  one failed. Instead, Google Calendar is the bridge: Claude writes to it and Gemini reads it.
-- **Three shapes out of seven options:** the morning briefing (`claude -p`), the speaker MCP
-  server, and the task-finished hook as an add-on. I dropped the phone-as-microphone relay
-  (too many endpoints) and a "Hey Jarvis" wake-word assistant once I limited the hardware to
-  just this computer and the speaker.
-- **`claude -p`, never the Claude API**, which bills per call.
-- **The name:** Claude suggested "Herald"; I picked HomeBrief (like Homebrew, and homebrewed).
+- **Google Calendar is the bridge to Gemini.** Claude writes to the calendar and Gemini reads it;
+  Claude never prompts Gemini, since two models in a chain would hide which one failed.
+- **The model returns text; code acts on it.** The briefing is validated before it's spoken, and
+  every calendar rule is checked in code rather than trusted to the prompt.
+- **`claude -p` and MCP only, never the Claude API**, which bills per call.
+- **Discord Rich Presence, not my online status.** Changing my status or custom status from code
+  would need a self-bot, which Discord bans.
 
-Those decisions became `CLAUDE.md`, which existed before the first line of code and has guided
-every session since: the hard constraints, the model/code split, the rules for spoken text and
-calendar writes, the validation code must do, the hook loop guard, and a build order with the
-riskiest step (casting to the speaker) first.
-
-**Building (October 20 onward).** `LOG.md` records every plan, change and problem from then
-on, including dead ends (voice input through the speaker, and changing my Discord online
-status or custom status, which would need a banned self-bot; Rich Presence is the allowed
-alternative).
+`CLAUDE.md` holds the full constraints and rules every session follows. The plan, every change
+and the dead ends are in [`LOG.md`](LOG.md); the planning conversation that came before any
+code is in [`docs/planning-conversation.md`](docs/planning-conversation.md).

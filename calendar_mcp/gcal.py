@@ -25,14 +25,23 @@ CREDENTIALS = ROOT / "credentials.json"
 TOKEN = ROOT / "token.json"
 SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 TAG = "[claude]"
-EARLIEST = time(8, 0)
+EARLIEST = time(11, 30)
 LATEST = time(22, 0)
 MAX_TITLE = 100
-MAX_CLAUDE_PER_DAY = 5  # cap on [claude] events per day, so repeated runs can't pile up
+# My class schedule (weekday 0 = Monday). Classes aren't on the calendar, so code keeps them.
+CLASSES = [
+    ("TCSS 372 A", (0, 2), time(9, 30), time(10, 50)),
+    ("TMATH 126 B", (1, 3), time(10, 10), time(12, 10)),
+    ("TCSS 490 A", (0,), time(15, 40), time(17, 40)),
+]
+CLASS_PADDING = timedelta(hours=1)  # on class days, nothing until this long after the last class
 
 load_dotenv(ROOT / ".env")
 TZ = ZoneInfo(os.getenv("TIME_ZONE", "America/Los_Angeles"))
 CALENDAR_ID = os.getenv("CALENDAR_ID", "primary")
+# Cap on [claude] events per day, so repeated runs can't pile up. The morning briefing lowers it
+# to 1 for its own run; asking in a Claude Code session can go up to 5.
+MAX_CLAUDE_PER_DAY = int(os.getenv("HOMEBRIEF_MAX_CLAUDE_PER_DAY", "5"))
 
 
 def authorize() -> None:
@@ -94,6 +103,15 @@ def day_events(day: date) -> list[dict]:
     return [_normalize(e) for e in items if e.get("status") != "cancelled" and not _declined(e)]
 
 
+def earliest_start(day: date) -> time:
+    """Earliest time a new event may start: 11:30 AM, or on class days an hour after the last
+    class if that is later."""
+    ends = [end for _, days, _, end in CLASSES if day.weekday() in days]
+    if not ends:
+        return EARLIEST
+    return max(EARLIEST, (datetime.combine(day, max(ends)) + CLASS_PADDING).time())
+
+
 def check_new_event(start: datetime, end: datetime, existing: list[dict]) -> list[str]:
     """Return the CLAUDE.md write rules this new event would break (empty if none)."""
     errors = []
@@ -101,10 +119,13 @@ def check_new_event(start: datetime, end: datetime, existing: list[dict]) -> lis
         errors.append("end must be after start")
     if start.date() != end.date():
         errors.append("event must start and end on the same day")
-    if start.time() < EARLIEST or end.time() > LATEST:
-        errors.append("event must fall between 8:00 AM and 10:00 PM")
+    first = earliest_start(start.date())
+    if start.time() < first or end.time() > LATEST:
+        reason = " (one hour after the last class)" if first > EARLIEST else ""
+        errors.append(f"on {start:%A}s events must fall between {first:%-I:%M %p}{reason} "
+                      "and 10:00 PM")
     if sum(e["claude"] for e in existing) >= MAX_CLAUDE_PER_DAY:
-        errors.append(f"already {MAX_CLAUDE_PER_DAY} Claude events that day")
+        errors.append(f"already {MAX_CLAUDE_PER_DAY} Claude event(s) that day, the most allowed")
     for e in existing:
         if e["all_day"]:
             continue

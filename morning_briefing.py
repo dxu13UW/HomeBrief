@@ -24,16 +24,17 @@ from string import Template
 ROOT = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT / "speaker_mcp"), str(ROOT / "calendar_mcp")]
 
-from gcal import TZ, day_events  # noqa: E402
+from gcal import EARLIEST, TZ, day_events, earliest_start  # noqa: E402
 from speaker import MAX_WORDS, Speaker, clean  # noqa: E402
 
 PROMPT = ROOT / "prompts" / "morning_briefing.md"
 LOG_FILE = ROOT / "logs" / "briefings.jsonl"
 CLAUDE_TIMEOUT = 300  # seconds
-FOCUS_ON = ("You may add up to two focus blocks with create_tagged_event, each at least 60 "
-            "minutes, only in free time after now and between 8 AM and 10 PM. Skip this if the "
-            "day is already full or already has events with \"claude\": true. If the tool "
-            "rejects a block, accept the reason and do not retry it more than once.")
+FOCUS_ON = ("You may add one focus block with create_tagged_event, at least 60 "
+            "minutes, only in free time after now, starting no earlier than {earliest} and "
+            "ending by 10 PM. Skip this if the day is already full or already has events with "
+            "\"claude\": true. If the tool rejects the block, accept the reason and do not retry "
+            "it more than once.")
 FOCUS_OFF = "Focus blocks are turned off for this run. Do not call create_tagged_event."
 
 ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen "
@@ -82,6 +83,14 @@ def fallback(events: list[dict]) -> str:
             + " ".join(describe(e) + "." for e in events))
 
 
+def earliest_text(day: date) -> str:
+    """When focus blocks may start today, with the reason on class days."""
+    first = earliest_start(day)
+    if first == EARLIEST:
+        return f"{first:%-I:%M %p}"
+    return f"{first:%-I:%M %p} (an hour after my last class today; never during or near a class)"
+
+
 def prompt_events(events: list[dict]) -> str:
     """Events as compact JSON with plain HH:MM local times for the model."""
     rows = []
@@ -102,7 +111,9 @@ def run_claude(prompt: str, allow_writes: bool) -> dict:
     """Run claude -p with only the calendar tools. Returns its JSON result."""
     claude = shutil.which("claude") or str(Path.home() / ".local/bin/claude")
     mcp_config = {"mcpServers": {"calendar": {
-        "command": sys.executable, "args": [str(ROOT / "calendar_mcp" / "server.py")]}}}
+        "command": sys.executable, "args": [str(ROOT / "calendar_mcp" / "server.py")],
+        # The briefing adds at most one focus block a day; more only when I ask in a session.
+        "env": {"HOMEBRIEF_MAX_CLAUDE_PER_DAY": "1"}}}}
     tools = ["mcp__calendar__list_events"]
     if allow_writes:
         tools.append("mcp__calendar__create_tagged_event")
@@ -163,7 +174,7 @@ def main():
             today=day.strftime("%A, %B %-d, %Y"),
             now=now.strftime("%-I:%M %p") if day == now.date() else "the night before",
             events=prompt_events(events),
-            focus_rule=FOCUS_OFF if args.dry_run else FOCUS_ON,
+            focus_rule=FOCUS_OFF if args.dry_run else FOCUS_ON.format(earliest=earliest_text(day)),
         )
         result = run_claude(prompt, allow_writes=not args.dry_run)
         entry["raw"] = result.get("result", "")
